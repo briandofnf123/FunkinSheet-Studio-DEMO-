@@ -5,6 +5,7 @@ FunkinSheet Studio is a lightweight, web-based tool designed specifically for Fr
 Key Features:
 
 Drag & Drop Interface: Upload multiple individual PNG frames simultaneously with automatic asynchronous processing.
+
 Smart Animation Naming: Automatically detects base animation names from your filenames (e.g., idle001.png becomes idle) while allowing manual customization per frame.
 
 Frame Management: Reorder frames using up and down controls, sort alphabetically, or remove unwanted items easily.
