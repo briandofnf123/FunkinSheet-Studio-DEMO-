@@ -17,3 +17,5 @@ Enter your desired spritesheet and XML name in the configuration panel.
 Drag and drop your loose PNG frames into the upload zone.
 Review the frame list and adjust the animation names if necessary.
 Click "Generate & Download" to get your ready-to-use ZIP file for your FNF project.
+
+Website Version: https://funkinsheetstudiowebsite.netlify.app/
