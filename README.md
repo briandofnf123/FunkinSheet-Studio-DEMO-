@@ -1,4 +1,4 @@
-# FunkinSheet-Studio-DEMO
+# FunkinSheet Studio 
 
 FunkinSheet Studio is a lightweight, web-based tool designed specifically for Friday Night Funkin' developers and animators working with Psych Engine, Codename Engine, and P-Slice Engine. It allows you to convert and pack loose individual PNG sprite frames into a single spritesheet along with its corresponding Sparrow V2 XML file instantly in your browser, requiring no downloads or installations.
 Key Features:
