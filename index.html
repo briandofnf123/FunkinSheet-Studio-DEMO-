@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FunkinSheet Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        body {
+            background-color: #13131a;
+            color: #e2e8f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(30, 30, 46, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #f92d7a, #6c5ce7);
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px #f92d7a;
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #13131a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #718096; }
+
+        .dropzone-active {
+            border-color: #f92d7a !important;
+            background: rgba(249, 45, 122, 0.1) !important;
+        }
+        
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background: #2d3748;
+            border-left: 4px solid #f92d7a;
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease forwards, fadeOut 0.3s ease 2.7s forwards;
+            color: white;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <div id="toast-container"></div>
+
+    <div class="max-w-5xl mx-auto space-y-6">
+        <!-- Header -->
+        <header class="text-center py-6">
+            <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500 drop-shadow-lg">
+                FunkinSheet Studio
+            </h1>
+            <p class="text-gray-400 mt-2">Crie Spritesheets e XMLs optimizados para Psych, Codename e P-Slice Engine.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Sidebar / Config -->
+            <div class="space-y-6">
+                <!-- Config Panel -->
+                <div class="glass-panel p-6 shadow-xl">
+                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-pink-500"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 Z"/></svg>
+                        Configurações
+                    </h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Nome da Spritesheet (e XML)</label>
+                            <input type="text" id="sheetName" value="meu_personagem" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-pink-500 transition" placeholder="Ex: bf_custom">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export Panel -->
+                <div class="glass-panel p-6 shadow-xl text-center">
+                    <h2 class="text-xl font-bold mb-4 text-left">Exportar Ficheiros</h2>
+                    <p class="text-sm text-gray-400 mb-4 text-left">As imagens serão unidas num único PNG e o XML será gerado no formato Sparrow V2.</p>
+                    <button onclick="exportSprites()" class="btn-primary w-full py-3 rounded-lg font-bold text-white shadow-lg flex justify-center items-center gap-2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Gerar & Descarregar (.ZIP)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content / Editor -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Dropzone -->
+                <div class="glass-panel p-1">
+                    <label id="dropzone" for="fileInput" class="block w-full border-2 border-dashed border-gray-600 hover:border-pink-500 hover:bg-gray-800/50 rounded-xl p-8 text-center cursor-pointer transition-all duration-200">
+                        <div class="flex flex-col items-center justify-center space-y-3">
+                            <div class="bg-gray-800 p-3 rounded-full text-pink-500">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-lg font-semibold text-white">Clique ou Arraste as suas imagens PNG</p>
+                                <p class="text-sm text-gray-400">Pode selecionar múltiplos frames em simultâneo!</p>
+                            </div>
+                        </div>
+                        <input type="file" id="fileInput" multiple accept="image/png" class="hidden" onchange="handleFileInput(event)">
+                    </label>
+                </div>
+
+                <!-- Lista de Frames -->
+                <div class="glass-panel p-6 shadow-xl flex flex-col max-h-[600px]">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">Os Meus Frames (<span id="frameCount">0</span>)</h2>
+                        <div class="flex gap-2">
+                            <button onclick="sortFrames()" class="text-sm text-blue-400 hover:text-blue-300 transition px-2">Organizar por Nome</button>
+                            <button onclick="clearAll()" class="text-sm text-red-400 hover:text-red-300 transition px-2 border-l border-gray-600">Limpar Tudo</button>
+                        </div>
+                    </div>
+                    
+                    <div id="frameList" class="flex-1 overflow-y-auto space-y-3 pr-2 min-h-[200px]">
+                        <!-- Itens renderizados via JS entram aqui -->
+                        <div class="text-center text-gray-500 mt-10" id="emptyState">
+                            <p>Nenhuma imagem adicionada ainda.</p>
+                            <p class="text-sm">Os frames aparecerão aqui em formato de lista para configurar os nomes das animações.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Principal -->
+    <script>
+        let frames = [];
+        let idCounter = 0;
+
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                if (toast.parentElement) toast.remove();
+            }, 3000);
+        }
+
+        const dropzone = document.getElementById('dropzone');
+        
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dropzone-active');
+        });
+
+        dropzone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dropzone-active');
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dropzone-active');
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                processFiles(e.dataTransfer.files);
+            }
+        });
+
+        function handleFileInput(event) {
+            if (event.target.files && event.target.files.length > 0) {
+                processFiles(event.target.files);
+            }
+            event.target.value = '';
+        }
+
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function loadImage(src) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = (e) => reject(e);
+                img.src = src;
+            });
+        }
+
+        async function processFiles(files) {
+            const validFiles = Array.from(files).filter(file => file.type.match('image/png'));
+            
+            if (validFiles.length === 0) {
+                showToast("Erro: Apenas imagens PNG são suportadas.");
+                return;
+            }
+
+            let addedCount = 0;
+            showToast("A carregar imagens, aguarde...");
+
+            for (const file of validFiles) {
+                try {
+                    const dataUrl = await readFileAsDataURL(file);
+                    const img = await loadImage(dataUrl);
+                    
+                    let guessName = file.name
+                        .replace(/\.[^/.]+$/, "")
+                        .replace(/[0-9]+$/, "")
+                        .replace(/[_-]+$/, "");
+                    
+                    if (!guessName) guessName = "anim"; 
+                    
+                    frames.push({
+                        id: idCounter++,
+                        filename: file.name,
+                        animName: guessName,
+                        imgElement: img,
+                        width: img.width,
+                        height: img.height,
+                        dataUrl: dataUrl
+                    });
+                    
+                    addedCount++;
+                } catch (error) {
+                    console.error(`Erro ao processar ${file.name}:`, error);
+                }
+            }
+
+            if (addedCount > 0) {
+                showToast(`${addedCount} frame(s) adicionado(s) com sucesso!`);
+                renderFrames();
+            }
+        }
+
+        function renderFrames() {
+            const list = document.getElementById('frameList');
+            const emptyState = document.getElementById('emptyState');
+            const count = document.getElementById('frameCount');
+            
+            count.textContent = frames.length;
+
+            if (frames.length === 0) {
+                list.innerHTML = '';
+                list.appendChild(emptyState);
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            list.innerHTML = '';
+
+            frames.forEach((frame, index) => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center gap-4 bg-gray-800/80 p-3 rounded-lg border border-gray-700 transition hover:border-gray-500';
+                
+                const thumbWrapper = document.createElement('div');
+                thumbWrapper.className = 'w-16 h-16 bg-gray-900 rounded border border-gray-600 flex items-center justify-center overflow-hidden flex-shrink-0 relative';
+                thumbWrapper.style.backgroundImage = 'linear-gradient(45deg, #1f2937 25%, transparent 25%), linear-gradient(-45deg, #1f2937 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1f2937 75%), linear-gradient(-45deg, transparent 75%, #1f2937 75%)';
+                thumbWrapper.style.backgroundSize = '10px 10px';
+                thumbWrapper.style.backgroundPosition = '0 0, 0 5px, 5px -5px, -5px 0px';
+                
+                const thumb = document.createElement('img');
+                thumb.src = frame.dataUrl;
+                thumb.className = 'max-w-full max-h-full object-contain';
+                thumbWrapper.appendChild(thumb);
+                
+                const infoWrapper = document.createElement('div');
+                infoWrapper.className = 'flex-1 flex flex-col justify-center min-w-0';
+                
+                const filenameLabel = document.createElement('div');
+                filenameLabel.className = 'text-xs text-gray-500 truncate mb-1';
+                filenameLabel.textContent = frame.filename + ` (${frame.width}x${frame.height})`;
+
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.value = frame.animName;
+                nameInput.placeholder = 'Nome da Animação (ex: idle)';
+                nameInput.className = 'w-full bg-gray-900 border border-gray-600 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-pink-500 transition';
+                
+                nameInput.oninput = (e) => {
+                    frame.animName = e.target.value.trim();
+                };
+
+                infoWrapper.appendChild(filenameLabel);
+                infoWrapper.appendChild(nameInput);
+
+                const controlsWrapper = document.createElement('div');
+                controlsWrapper.className = 'flex items-center gap-2 flex-shrink-0';
+                
+                const btnUp = document.createElement('button');
+                btnUp.className = 'p-1.5 btn-secondary rounded hover:text-white text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed';
+                btnUp.disabled = index === 0;
+                btnUp.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>';
+                btnUp.onclick = () => moveFrame(index, -1);
+                
+                const btnDown = document.createElement('button');
+                btnDown.className = 'p-1.5 btn-secondary rounded hover:text-white text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed';
+                btnDown.disabled = index === frames.length - 1;
+                btnDown.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+                btnDown.onclick = () => moveFrame(index, 1);
+                
+                const btnRemove = document.createElement('button');
+                btnRemove.className = 'p-1.5 btn-secondary rounded hover:bg-red-500/20 text-red-400 hover:text-red-300';
+                btnRemove.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+                btnRemove.onclick = () => removeFrame(index);
+
+                controlsWrapper.appendChild(btnUp);
+                controlsWrapper.appendChild(btnDown);
+                controlsWrapper.appendChild(btnRemove);
+
+                item.appendChild(thumbWrapper);
+                item.appendChild(infoWrapper);
+                item.appendChild(controlsWrapper);
+                
+                list.appendChild(item);
+            });
+        }
+
+        function moveFrame(index, dir) {
+            if (dir === -1 && index > 0) {
+                const temp = frames[index];
+                frames[index] = frames[index - 1];
+                frames[index - 1] = temp;
+                renderFrames();
+            } else if (dir === 1 && index < frames.length - 1) {
+                const temp = frames[index];
+                frames[index] = frames[index + 1];
+                frames[index + 1] = temp;
+                renderFrames();
+            }
+        }
+
+        function removeFrame(index) {
+            frames.splice(index, 1);
+            renderFrames();
+        }
+
+        function clearAll() {
+            if(confirm("Tem certeza que deseja apagar todos os frames?")) {
+                frames = [];
+                renderFrames();
+                showToast("Todos os frames foram removidos.");
+            }
+        }
+
+        function sortFrames() {
+            frames.sort((a, b) => a.filename.localeCompare(b.filename));
+            renderFrames();
+            showToast("Frames organizados em ordem alfabética!");
+        }
+
+        async function exportSprites() {
+            if (frames.length === 0) {
+                showToast("Erro: Adicione frames antes de exportar!");
+                return;
+            }
+
+            if (typeof JSZip === 'undefined') {
+                showToast("Erro: Aguarde a página terminar de carregar os scripts.");
+                return;
+            }
+
+            showToast("A empacotar Spritesheet, aguarde...");
+
+            const sheetName = document.getElementById("sheetName").value.trim() || "spritesheet";
+            
+            const MAX_CANVAS_WIDTH = 4096; 
+            let currentX = 0;
+            let currentY = 0;
+            let currentRowHeight = 0;
+            let maxUsedWidth = 0;
+
+            const packedData = [];
+            const animationCounters = {};
+
+            for (let i = 0; i < frames.length; i++) {
+                const frame = frames[i];
+                
+                if (currentX + frame.width > MAX_CANVAS_WIDTH && currentX > 0) {
+                    currentX = 0;
+                    currentY += currentRowHeight;
+                    currentRowHeight = 0;
+                }
+
+                packedData.push({
+                    img: frame.imgElement,
+                    x: currentX,
+                    y: currentY,
+                    w: frame.width,
+                    h: frame.height,
+                    animPrefix: frame.animName || "anim"
+                });
+
+                currentX += frame.width;
+                if (currentX > maxUsedWidth) maxUsedWidth = currentX;
+                if (frame.height > currentRowHeight) currentRowHeight = frame.height;
+            }
+
+            const finalCanvasWidth = maxUsedWidth;
+            const finalCanvasHeight = currentY + currentRowHeight;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = finalCanvasWidth;
+            canvas.height = finalCanvasHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            let xmlContent = `<?xml version="1.0" encoding="utf-8"?>\n<TextureAtlas imagePath="${sheetName}.png">\n`;
+
+            for (let i = 0; i < packedData.length; i++) {
+                const item = packedData.logica || packedData[i];
+                ctx.drawImage(item.img, item.x, item.y);
+                
+                const prefix = item.animPrefix;
+                if (animationCounters[prefix] === undefined) {
+                    animationCounters[prefix] = 0;
+                }
+                const frameNum = animationCounters[prefix].toString().padStart(4, '0');
+                const subTextureName = `${prefix}${frameNum}`;
+                animationCounters[prefix]++;
+
+                xmlContent += `\t<SubTexture name="${subTextureName}" x="${item.x}" y="${item.y}" width="${item.w}" height="${item.h}" frameX="0" frameY="0" frameWidth="${item.w}" frameHeight="${item.h}" />\n`;
+            }
+
+            xmlContent += `</TextureAtlas>`;
+
+            const zip = new JSZip();
+            zip.file(`${sheetName}.xml`, xmlContent);
+
+            canvas.toBlob(async (blob) => {
+                if (!blob) {
+                    showToast("Erro ao gerar a imagem no navegador.");
+                    return;
+                }
+                zip.file(`${sheetName}.png`, blob);
+                
+                try {
+                    const zipBlob = await zip.generateAsync({type: "blob"});
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = URL.createObjectURL(zipBlob);
+                    downloadLink.download = `${sheetName}.zip`;
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                    
+                    showToast("Sucesso! Descarregamento iniciado.");
+                } catch (error) {
+                    console.error(error);
+                    showToast("Erro ao gerar o ZIP.");
+                }
+            }, "image/png");
+        }
+    </script>
+</body>
+</html>
+
+

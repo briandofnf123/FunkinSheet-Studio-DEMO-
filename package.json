@@ -1,0 +1,14 @@
+{
+  "name": "funkinsheet-studio",
+  "version": "1.0.0",
+  "description": "Gerador de Spritesheet para FNF",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-packager . FunkinSheetStudio --platform=win32 --arch=x64 --out=dist --icon=assets/icon.ico --overwrite"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-packager": "^17.1.2"
+  }
+}
