@@ -1,7 +1,7 @@
 {
   "name": "funkinsheet-studio",
   "version": "1.0.0",
-  "description": "Gerador de Spritesheet para FNF",
+  "description": "FNF Spritesheet Generator",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
