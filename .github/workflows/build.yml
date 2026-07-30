@@ -2,29 +2,28 @@ name: Build Windows App
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-      - name: Baixar codigo do repositorio
-        uses: actions/checkout@v4
+        uses: actions/checkout@7
 
-      - name: Configurar Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
         with:
           node-version: 18
 
-      - name: Instalar dependencias
+      - name: Install dependencies
         run: npm install
 
-      - name: Compilar para .exe
+      - name: Build
         run: npm run build
 
-      - name: Salvar o arquivo EXE gerado
-        uses: actions/upload-artifact@v4
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
         with:
           name: FunkinSheetStudio-Windows
           path: dist/FunkinSheetStudio-win32-x64/
