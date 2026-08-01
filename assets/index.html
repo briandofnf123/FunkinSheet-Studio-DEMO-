@@ -6,6 +6,7 @@
     <title>SpriteSheet Studio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://unpkg.com/maxrects-packer@2.7.3/dist/maxrects-packer.min.js"></script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -108,6 +109,18 @@
           opacity: 0;
         }
       }
+      select {
+        background-color: #1f2937;
+        color: #e2e8f0;
+        border: 1px solid #4b5563;
+        border-radius: 8px;
+        padding: 0.5rem 0.75rem;
+        outline: none;
+        cursor: pointer;
+      }
+      select:focus {
+        border-color: #f92d7a;
+      }
     </style>
   </head>
   <body class="min-h-screen p-4 md:p-8 relative">
@@ -115,7 +128,7 @@
       <select
         id="langSelect"
         onchange="changeLanguage(this.value)"
-        class="bg-gray-800 border border-gray-600 text-white text-sm rounded-lg focus:ring-pink-500 focus:border-pink-500 block w-full p-2.5 outline-none cursor-pointer"
+        class="bg-gray-800 border border-gray-600 text-white text-sm rounded-lg focus:border-pink-500 block w-full p-2.5 outline-none cursor-pointer"
       >
         <option value="br">Português (BR)</option>
         <option value="en" selected>English</option>
@@ -182,6 +195,20 @@
                   class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-pink-500 transition"
                   placeholder="Ex: my_character"
                 />
+              </div>
+              <div id="packing-alg-group">
+                <label
+                  id="lblPackingAlg"
+                  class="block text-sm font-medium text-gray-400 mb-1"
+                  >Packing Algorithm</label
+                >
+                <select
+                  id="packingAlg"
+                  class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-pink-500"
+                >
+                  <option value="maxrects">MaxRects (Efficient)</option>
+                  <option value="shelf">Shelf (Simple, preserves order)</option>
+                </select>
               </div>
             </div>
           </div>
@@ -304,39 +331,14 @@
     </div>
 
     <script>
-      let currentMode = "sprite";
-
-      function setMode(mode) {
-        currentMode = mode;
-        const tabSprite = document.getElementById("tab-sprite");
-        const tabIcon = document.getElementById("tab-icon");
-        const panelSprite = document.getElementById("export-sprite-panel");
-        const panelIcon = document.getElementById("export-icon-panel");
-
-        if (mode === "sprite") {
-          tabSprite.className =
-            "px-6 py-2.5 rounded-full font-bold transition-all bg-pink-600 text-white shadow-lg shadow-pink-500/30 flex items-center gap-2";
-          tabIcon.className =
-            "px-6 py-2.5 rounded-full font-bold transition-all bg-gray-800 text-gray-400 hover:bg-gray-700 flex items-center gap-2";
-          panelSprite.style.display = "block";
-          panelIcon.style.display = "none";
-        } else {
-          tabIcon.className =
-            "px-6 py-2.5 rounded-full font-bold transition-all bg-pink-600 text-white shadow-lg shadow-pink-500/30 flex items-center gap-2";
-          tabSprite.className =
-            "px-6 py-2.5 rounded-full font-bold transition-all bg-gray-800 text-gray-400 hover:bg-gray-700 flex items-center gap-2";
-          panelSprite.style.display = "none";
-          panelIcon.style.display = "block";
-        }
-        renderFrames();
-      }
-
+      let currentLang = "en";
       const translations = {
         br: {
           descApp:
             "Crie Spritesheets, XMLs e Tiras de Ícones otimizados para qualquer Engine de jogos.",
           titleConfig: "Configurações",
           lblSheetName: "Nome do Arquivo",
+          lblPackingAlg: "Algoritmo de Empacotamento",
           titleExport: "Exportar Arquivos",
           lblTabSprite: "Criar Spritesheet",
           lblTabIcon: "Tira de Ícones (Strip)",
@@ -365,12 +367,15 @@
           msgLoadError: "Erro ao carregar imagem: ",
           msgLargeSprite:
             "Aviso: Spritesheet muito grande (>8192px) pode causar problemas de performance.",
+          msgLibMissing:
+            "Biblioteca de empacotamento não carregada. Usando Shelf.",
         },
         en: {
           descApp:
             "Create Spritesheets, XMLs, and Icon Strips optimized for any game engine.",
           titleConfig: "Settings",
           lblSheetName: "File Name",
+          lblPackingAlg: "Packing Algorithm",
           titleExport: "Export Files",
           lblTabSprite: "Create Spritesheet",
           lblTabIcon: "Icon Strip",
@@ -398,12 +403,15 @@
           msgLoadError: "Error loading image: ",
           msgLargeSprite:
             "Warning: Spritesheet too large (>8192px) may cause performance issues.",
+          msgLibMissing:
+            "Packing library not loaded. Falling back to Shelf algorithm.",
         },
         es: {
           descApp:
             "Crea Spritesheets, XMLs y Tiras de Iconos optimizados para cualquier motor de juegos.",
           titleConfig: "Configuraciones",
           lblSheetName: "Nombre del Archivo",
+          lblPackingAlg: "Algoritmo de Empaquetado",
           titleExport: "Exportar Archivos",
           lblTabSprite: "Crear Spritesheet",
           lblTabIcon: "Tira de Iconos",
@@ -434,12 +442,15 @@
           msgLoadError: "Error al cargar la imagen: ",
           msgLargeSprite:
             "Advertencia: Spritesheet demasiado grande (>8192px) puede causar problemas de rendimiento.",
+          msgLibMissing:
+            "La biblioteca de empaquetado no se cargó. Usando Shelf.",
         },
         id: {
           descApp:
             "Buat spritesheet, file XML, dan ikon strip yang dioptimalkan untuk mesin game apa pun.",
           titleConfig: "Pengaturan",
           lblSheetName: "Nama File",
+          lblPackingAlg: "Algoritma Penataan",
           titleExport: "Ekspor File",
           lblTabSprite: "Buat Spritesheet",
           lblTabIcon: "Ikon Strip",
@@ -469,24 +480,25 @@
           msgLoadError: "Error memuat gambar: ",
           msgLargeSprite:
             "Peringatan: Spritesheet terlalu besar (>8192px) dapat menyebabkan masalah kinerja.",
+          msgLibMissing:
+            "Pustaka penataan tidak dimuat. Kembali menggunakan Shelf.",
         },
       };
 
-      let currentLang = "en";
-
       function t(key) {
-        return translations[currentLang][key];
+        return translations[currentLang][key] || key;
       }
 
       function changeLanguage(lang) {
         currentLang = lang;
         document.documentElement.lang = lang;
         document.getElementById("descApp").innerText = t("descApp");
-        document.getElementById("titleConfig").innerHTML =
-          `<i class="fa-solid fa-sliders text-pink-500"></i> ${t("titleConfig")}`;
+        document.getElementById("titleConfig").innerHTML = `
+          <i class="fa-solid fa-sliders text-pink-500"></i> ${t("titleConfig")}`;
         document.getElementById("lblSheetName").innerText = t("lblSheetName");
-        document.getElementById("titleExport").innerHTML =
-          `<i class="fa-solid fa-file-export text-purple-400"></i> ${t("titleExport")}`;
+        document.getElementById("lblPackingAlg").innerText = t("lblPackingAlg");
+        document.getElementById("titleExport").innerHTML = `
+          <i class="fa-solid fa-file-export text-purple-400"></i> ${t("titleExport")}`;
         document.getElementById("lblTabSprite").innerText = t("lblTabSprite");
         document.getElementById("lblTabIcon").innerText = t("lblTabIcon");
         document.getElementById("btnExportZip").innerText = t("btnExportZip");
@@ -496,42 +508,32 @@
         document.getElementById("dropTitle").innerText = t("dropTitle");
         document.getElementById("dropDesc").innerText = t("dropDesc");
         document.getElementById("titleFrames").innerText = t("titleFrames");
-        document.getElementById("btnSort").innerHTML =
-          `<i class="fa-solid fa-arrow-down-a-z"></i> ${t("btnSort")}`;
-        document.getElementById("btnClear").innerHTML =
-          `<i class="fa-solid fa-trash-can"></i> ${t("btnClear")}`;
+        document.getElementById("btnSort").innerHTML = `
+          <i class="fa-solid fa-arrow-down-a-z"></i> ${t("btnSort")}`;
+        document.getElementById("btnClear").innerHTML = `
+          <i class="fa-solid fa-trash-can"></i> ${t("btnClear")}`;
         document.getElementById("emptyTitle").innerText = t("emptyTitle");
         document.getElementById("emptyDesc").innerText = t("emptyDesc");
-
         renderFrames();
       }
 
       function detectAndSetLanguage() {
         const browserLang = navigator.language || navigator.userLanguage;
         let detectedLang = "en";
-
         if (browserLang) {
           const langCode = browserLang.split("-")[0].toLowerCase();
           if (langCode === "pt") {
-            const fullLang = browserLang.toLowerCase();
-            if (fullLang === "pt-br" || fullLang === "pt_br") {
-              detectedLang = "br";
-            } else {
-              detectedLang = "en";
-            }
-          } else if (langCode === "es") {
-            detectedLang = "es";
-          } else if (langCode === "id") {
-            detectedLang = "id";
-          } else if (langCode === "en") {
-            detectedLang = "en";
-          }
+            const full = browserLang.toLowerCase();
+            detectedLang = full === "pt-br" || full === "pt_br" ? "br" : "en";
+          } else if (langCode === "es") detectedLang = "es";
+          else if (langCode === "id") detectedLang = "id";
+          else if (langCode === "en") detectedLang = "en";
         }
-
         document.getElementById("langSelect").value = detectedLang;
         changeLanguage(detectedLang);
       }
 
+      let currentMode = "sprite";
       let frames = [];
       let idCounter = 0;
 
@@ -546,31 +548,32 @@
         }, 3000);
       }
 
-      const dropzone = document.getElementById("dropzone");
+      function setMode(mode) {
+        currentMode = mode;
+        const tabSprite = document.getElementById("tab-sprite");
+        const tabIcon = document.getElementById("tab-icon");
+        const panelSprite = document.getElementById("export-sprite-panel");
+        const panelIcon = document.getElementById("export-icon-panel");
+        const packingGroup = document.getElementById("packing-alg-group");
 
-      dropzone.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        dropzone.classList.add("dropzone-active");
-      });
-
-      dropzone.addEventListener("dragleave", (e) => {
-        e.preventDefault();
-        dropzone.classList.remove("dropzone-active");
-      });
-
-      dropzone.addEventListener("drop", (e) => {
-        e.preventDefault();
-        dropzone.classList.remove("dropzone-active");
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-          processFiles(e.dataTransfer.files);
+        if (mode === "sprite") {
+          tabSprite.className =
+            "px-6 py-2.5 rounded-full font-bold transition-all bg-pink-600 text-white shadow-lg shadow-pink-500/30 flex items-center gap-2";
+          tabIcon.className =
+            "px-6 py-2.5 rounded-full font-bold transition-all bg-gray-800 text-gray-400 hover:bg-gray-700 flex items-center gap-2";
+          panelSprite.style.display = "block";
+          panelIcon.style.display = "none";
+          packingGroup.style.display = "block";
+        } else {
+          tabIcon.className =
+            "px-6 py-2.5 rounded-full font-bold transition-all bg-pink-600 text-white shadow-lg shadow-pink-500/30 flex items-center gap-2";
+          tabSprite.className =
+            "px-6 py-2.5 rounded-full font-bold transition-all bg-gray-800 text-gray-400 hover:bg-gray-700 flex items-center gap-2";
+          panelSprite.style.display = "none";
+          panelIcon.style.display = "block";
+          packingGroup.style.display = "none";
         }
-      });
-
-      function handleFileInput(event) {
-        if (event.target.files && event.target.files.length > 0) {
-          processFiles(event.target.files);
-        }
-        event.target.value = "";
+        renderFrames();
       }
 
       function readFileAsDataURL(file) {
@@ -595,7 +598,6 @@
         const validFiles = Array.from(files).filter((file) =>
           file.type.match("image/png"),
         );
-
         if (validFiles.length === 0) {
           showToast(t("msgOnlyPng"));
           return;
@@ -613,7 +615,6 @@
             let guessName = file.name.replace(/\.[^/.]+$/, "");
             guessName = guessName.replace(/([_-]?)(\d+)$/, "");
             guessName = guessName.replace(/[_-]+$/, "");
-
             if (!guessName) guessName = "anim";
 
             frames.push({
@@ -625,7 +626,6 @@
               height: img.height,
               dataUrl: dataUrl,
             });
-
             addedCount++;
           } catch (error) {
             console.error(`Error processing ${file.name}:`, error);
@@ -636,7 +636,6 @@
         if (failedFiles.length > 0) {
           showToast(`${t("msgLoadError")}${failedFiles.join(", ")}`);
         }
-
         if (addedCount > 0) {
           showToast(`${addedCount} ${t("msgAdded")}`);
           renderFrames();
@@ -649,14 +648,12 @@
         const count = document.getElementById("frameCount");
 
         count.textContent = frames.length;
-
         list.innerHTML = "";
 
         if (frames.length === 0) {
           emptyState.style.display = "block";
           return;
         }
-
         emptyState.style.display = "none";
 
         frames.forEach((frame, index) => {
@@ -695,7 +692,6 @@
             nameInput.placeholder = t("inputPlace");
             nameInput.className =
               "w-full bg-gray-900 border border-gray-600 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-pink-500 transition";
-
             nameInput.oninput = (e) => {
               frame.animName = e.target.value.trim() || "anim";
             };
@@ -740,14 +736,16 @@
 
       function moveFrame(index, dir) {
         if (dir === -1 && index > 0) {
-          const temp = frames[index];
-          frames[index] = frames[index - 1];
-          frames[index - 1] = temp;
+          [frames[index], frames[index - 1]] = [
+            frames[index - 1],
+            frames[index],
+          ];
           renderFrames();
         } else if (dir === 1 && index < frames.length - 1) {
-          const temp = frames[index];
-          frames[index] = frames[index + 1];
-          frames[index + 1] = temp;
+          [frames[index], frames[index + 1]] = [
+            frames[index + 1],
+            frames[index],
+          ];
           renderFrames();
         }
       }
@@ -820,7 +818,7 @@
         }
 
         if (typeof JSZip === "undefined") {
-          showToast("Error: JS libraries not loaded.");
+          showToast("Error: JSZip not loaded.");
           return;
         }
 
@@ -828,71 +826,153 @@
 
         const sheetName =
           document.getElementById("sheetName").value.trim() || "spritesheet";
+        const algorithm = document.getElementById("packingAlg").value;
 
-        const MAX_CANVAS_WIDTH = 4096;
-        let currentX = 0;
-        let currentY = 0;
-        let currentRowHeight = 0;
-        let maxUsedWidth = 0;
+        const frameData = frames.map((f, idx) => ({
+          width: f.width,
+          height: f.height,
+          animName: f.animName || "anim",
+          img: f.imgElement,
+          index: idx,
+        }));
 
-        const packedData = [];
-        const animationCounters = {};
+        function packShelf(data) {
+          const MAX_WIDTH = 4096;
+          let currentX = 0,
+            currentY = 0,
+            rowHeight = 0,
+            maxUsedWidth = 0;
+          const placements = [];
 
-        for (let i = 0; i < frames.length; i++) {
-          const frame = frames[i];
-
-          if (currentX + frame.width > MAX_CANVAS_WIDTH && currentX > 0) {
-            currentX = 0;
-            currentY += currentRowHeight;
-            currentRowHeight = 0;
+          for (let i = 0; i < data.length; i++) {
+            const item = data[i];
+            if (currentX + item.width > MAX_WIDTH && currentX > 0) {
+              currentX = 0;
+              currentY += rowHeight;
+              rowHeight = 0;
+            }
+            placements.push({
+              img: item.img,
+              x: currentX,
+              y: currentY,
+              w: item.width,
+              h: item.height,
+              animName: item.animName,
+              idx: item.index,
+            });
+            currentX += item.width;
+            if (currentX > maxUsedWidth) maxUsedWidth = currentX;
+            if (item.height > rowHeight) rowHeight = item.height;
           }
-
-          packedData.push({
-            img: frame.imgElement,
-            x: currentX,
-            y: currentY,
-            w: frame.width,
-            h: frame.height,
-            animPrefix: frame.animName || "anim",
-          });
-
-          currentX += frame.width;
-          if (currentX > maxUsedWidth) maxUsedWidth = currentX;
-          if (frame.height > currentRowHeight) currentRowHeight = frame.height;
+          return {
+            placements,
+            width: maxUsedWidth,
+            height: currentY + rowHeight,
+          };
         }
 
-        const finalCanvasWidth = maxUsedWidth;
-        const finalCanvasHeight = currentY + currentRowHeight;
+        function packMaxRects(data) {
+          if (typeof MaxRectsPacker === "undefined") {
+            showToast(t("msgLibMissing"));
+            return null;
+          }
 
-        if (finalCanvasWidth > 8192 || finalCanvasHeight > 8192) {
-          showToast(t("msgLargeSprite"));
+          const BIN_WIDTH = 4096;
+          const BIN_HEIGHT = 4096;
+
+          const packer = new MaxRectsPacker(BIN_WIDTH, BIN_HEIGHT, {
+            smart: true,
+            pot: false,
+            square: false,
+          });
+
+          for (const item of data) {
+            packer.add({
+              width: item.width,
+              height: item.height,
+              data: item.index,
+            });
+          }
+
+          let packedRects = packer.pack();
+
+          if (!packedRects || packedRects.length < data.length) {
+            packer.resize(4096, 8192);
+            packedRects = packer.pack();
+            if (!packedRects || packedRects.length < data.length) {
+              showToast(
+                "MaxRects couldn't fit all sprites in 4096x4096. Using Shelf.",
+              );
+              return null;
+            } else {
+              showToast(
+                "Warning: Spritesheet height > 4096 (now 8192) may exceed some engine limits.",
+              );
+            }
+          }
+
+          const placements = [];
+          let maxX = 0,
+            maxY = 0;
+          for (const rect of packedRects) {
+            const idx = rect.data;
+            const item = data[idx];
+            placements.push({
+              img: item.img,
+              x: rect.x,
+              y: rect.y,
+              w: rect.width,
+              h: rect.height,
+              animName: item.animName,
+              idx: item.index,
+            });
+            maxX = Math.max(maxX, rect.x + rect.width);
+            maxY = Math.max(maxY, rect.y + rect.height);
+          }
+
+          placements.sort((a, b) => a.idx - b.idx);
+          return { placements, width: maxX, height: maxY };
+        }
+
+        let packResult;
+        if (algorithm === "maxrects") {
+          packResult = packMaxRects(frameData);
+          if (!packResult) packResult = packShelf(frameData);
+        } else {
+          packResult = packShelf(frameData);
+        }
+
+        const {
+          placements,
+          width: canvasWidth,
+          height: canvasHeight,
+        } = packResult;
+
+        if (canvasHeight > 4096) {
+          showToast(
+            `Warning: Spritesheet is ${canvasHeight}px tall may exceed engine limits.`,
+          );
         }
 
         const canvas = document.createElement("canvas");
-        canvas.width = finalCanvasWidth;
-        canvas.height = finalCanvasHeight;
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
         const ctx = canvas.getContext("2d");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         let xmlContent = `<?xml version="1.0" encoding="utf-8"?>\n<TextureAtlas imagePath="${sheetName}.png">\n`;
+        const animCounters = {};
 
-        for (let i = 0; i < packedData.length; i++) {
-          const item = packedData[i];
-          ctx.drawImage(item.img, item.x, item.y);
+        for (const p of placements) {
+          ctx.drawImage(p.img, p.x, p.y);
+          const prefix = p.animName;
+          if (!animCounters[prefix]) animCounters[prefix] = 0;
+          const frameNum = String(animCounters[prefix]).padStart(4, "0");
+          const subName = `${prefix}${frameNum}`;
+          animCounters[prefix]++;
 
-          const prefix = item.animPrefix;
-          if (animationCounters[prefix] === undefined) {
-            animationCounters[prefix] = 0;
-          }
-          const frameNum = animationCounters[prefix]
-            .toString()
-            .padStart(4, "0");
-          const subTextureName = `${prefix}${frameNum}`;
-          animationCounters[prefix]++;
-
-          xmlContent += `\t<SubTexture name="${subTextureName}" x="${item.x}" y="${item.y}" width="${item.w}" height="${item.h}" frameX="0" frameY="0" frameWidth="${item.w}" frameHeight="${item.h}" />\n`;
+          xmlContent += `\t<SubTexture name="${subName}" x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" frameWidth="${p.w}" frameHeight="${p.h}" />\n`;
         }
-
         xmlContent += `</TextureAtlas>`;
 
         const zip = new JSZip();
@@ -900,7 +980,7 @@
 
         canvas.toBlob(async (blob) => {
           if (!blob) {
-            showToast("Error generating image.");
+            showToast("Error generating spritesheet image.");
             return;
           }
           zip.file(`${sheetName}.png`, blob);
@@ -915,16 +995,42 @@
             downloadLink.click();
             document.body.removeChild(downloadLink);
             setTimeout(() => URL.revokeObjectURL(url), 100);
-
             showToast(t("msgSuccess"));
           } catch (error) {
             console.error(error);
-            showToast("Error generating ZIP.");
+            showToast("Error generating ZIP file.");
           }
         }, "image/png");
       }
 
-      document.addEventListener("DOMContentLoaded", detectAndSetLanguage);
+      const dropzone = document.getElementById("dropzone");
+      dropzone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropzone.classList.add("dropzone-active");
+      });
+      dropzone.addEventListener("dragleave", (e) => {
+        e.preventDefault();
+        dropzone.classList.remove("dropzone-active");
+      });
+      dropzone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropzone.classList.remove("dropzone-active");
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          processFiles(e.dataTransfer.files);
+        }
+      });
+
+      function handleFileInput(event) {
+        if (event.target.files && event.target.files.length > 0) {
+          processFiles(event.target.files);
+        }
+        event.target.value = "";
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        detectAndSetLanguage();
+        setMode("sprite");
+      });
     </script>
   </body>
 </html>
