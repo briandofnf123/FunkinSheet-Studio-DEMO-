@@ -1,722 +1,1036 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SpriteSheet Studio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <!-- Font Awesome para Ícones Profissionais -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://unpkg.com/maxrects-packer@2.7.3/dist/maxrects-packer.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
     <style>
-        body {
-            background-color: #13131a;
-            color: #e2e8f0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow-x: hidden;
-        }
-        .glass-panel {
-            background: rgba(30, 30, 46, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #f92d7a, #6c5ce7);
-            transition: all 0.2s ease;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px -10px #f92d7a;
-        }
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            transition: all 0.2s ease;
-        }
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-        .btn-icon {
-            background: linear-gradient(135deg, #10b981, #3b82f6);
-            transition: all 0.2s ease;
-        }
-        .btn-icon:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px -10px #10b981;
-        }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #13131a; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #718096; }
+      body {
+        background-color: #13131a;
+        color: #e2e8f0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        overflow-x: hidden;
+      }
+      .glass-panel {
+        background: rgba(30, 30, 46, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        backdrop-filter: blur(10px);
+        background-color: rgba(30, 30, 46, 0.85);
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #f92d7a, #6c5ce7);
+        transition: all 0.2s ease;
+      }
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px -10px #f92d7a;
+      }
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        transition: all 0.2s ease;
+      }
+      .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+      .btn-icon {
+        background: linear-gradient(135deg, #10b981, #3b82f6);
+        transition: all 0.2s ease;
+      }
+      .btn-icon:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px -10px #10b981;
+      }
 
-        .dropzone-active {
-            border-color: #f92d7a !important;
-            background: rgba(249, 45, 122, 0.1) !important;
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #13131a;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #4a5568;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #718096;
+      }
+
+      .dropzone-active {
+        border-color: #f92d7a !important;
+        background: rgba(249, 45, 122, 0.1) !important;
+      }
+
+      #toast-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .toast {
+        background: #2d3748;
+        border-left: 4px solid #f92d7a;
+        padding: 12px 20px;
+        border-radius: 6px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        animation:
+          slideIn 0.3s ease forwards,
+          fadeOut 0.3s ease 2.7s forwards;
+        color: white;
+      }
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
         }
-        
-        #toast-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+        to {
+          transform: translateX(0);
+          opacity: 1;
         }
-        .toast {
-            background: #2d3748;
-            border-left: 4px solid #f92d7a;
-            padding: 12px 20px;
-            border-radius: 6px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            animation: slideIn 0.3s ease forwards, fadeOut 0.3s ease 2.7s forwards;
-            color: white;
+      }
+      @keyframes fadeOut {
+        from {
+          transform: translateX(0);
+          opacity: 1;
         }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes fadeOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+        to {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+      }
+      select {
+        background-color: #1f2937;
+        color: #e2e8f0;
+        border: 1px solid #4b5563;
+        border-radius: 8px;
+        padding: 0.5rem 0.75rem;
+        outline: none;
+        cursor: pointer;
+      }
+      select:focus {
+        border-color: #f92d7a;
+      }
     </style>
-</head>
-<body class="min-h-screen p-4 md:p-8 relative">
-
-    <!-- Language Selector -->
+  </head>
+  <body class="min-h-screen p-4 md:p-8 relative">
     <div class="absolute top-4 right-4 md:top-8 md:right-8 z-50">
-        <select id="langSelect" onchange="changeLanguage(this.value)" class="bg-gray-800 border border-gray-600 text-white text-sm rounded-lg focus:ring-pink-500 focus:border-pink-500 block w-full p-2.5 outline-none cursor-pointer">
-            <option value="br">🇧🇷 Português (BR)</option>
-            <option value="en">🇺🇸 English</option>
-            <option value="es">🇪🇸 Español</option>
-        </select>
+      <select
+        id="langSelect"
+        onchange="changeLanguage(this.value)"
+        class="bg-gray-800 border border-gray-600 text-white text-sm rounded-lg focus:border-pink-500 block w-full p-2.5 outline-none cursor-pointer"
+      >
+        <option value="br">Português (BR)</option>
+        <option value="en" selected>English</option>
+        <option value="es">Español</option>
+        <option value="id">Bahasa Indonesia</option>
+      </select>
     </div>
 
     <div id="toast-container"></div>
 
     <div class="max-w-5xl mx-auto space-y-6">
-        <!-- Header -->
-        <header class="text-center py-6 mt-8 md:mt-0">
-            <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500 drop-shadow-lg flex items-center justify-center gap-3">
-                <i class="fa-solid fa-cubes text-pink-500"></i> SpriteSheet Studio
-            </h1>
-            <p id="descApp" class="text-gray-400 mt-2">Crie Spritesheets, XMLs e Tiras de Ícones otimizados para qualquer Engine de jogos.</p>
-        </header>
+      <header class="text-center py-6 mt-8 md:mt-0">
+        <h1
+          class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500 drop-shadow-lg flex items-center justify-center gap-3"
+        >
+          <i class="fa-solid fa-cubes text-pink-500"></i> SpriteSheet Studio
+        </h1>
+        <p id="descApp" class="text-gray-400 mt-2">
+          Create Spritesheets, XMLs, and Icon Strips optimized for any game
+          engine.
+        </p>
+      </header>
 
-        <!-- Navegação / Abas -->
-        <div class="flex justify-center gap-4 mb-4">
-            <button id="tab-sprite" onclick="setMode('sprite')" class="px-6 py-2.5 rounded-full font-bold transition-all bg-pink-600 text-white shadow-lg shadow-pink-500/30 flex items-center gap-2">
-                <i class="fa-solid fa-border-all"></i>
-                <span id="lblTabSprite">Criar Spritesheet</span>
-            </button>
-            <button id="tab-icon" onclick="setMode('icon')" class="px-6 py-2.5 rounded-full font-bold transition-all bg-gray-800 text-gray-400 hover:bg-gray-700 flex items-center gap-2">
-                <i class="fa-solid fa-table-columns"></i>
-                <span id="lblTabIcon">Tira de Ícones (Strip)</span>
-            </button>
-        </div>
+      <div class="flex justify-center gap-4 mb-4">
+        <button
+          id="tab-sprite"
+          onclick="setMode('sprite')"
+          class="px-6 py-2.5 rounded-full font-bold transition-all bg-pink-600 text-white shadow-lg shadow-pink-500/30 flex items-center gap-2"
+        >
+          <i class="fa-solid fa-border-all"></i>
+          <span id="lblTabSprite">Create Spritesheet</span>
+        </button>
+        <button
+          id="tab-icon"
+          onclick="setMode('icon')"
+          class="px-6 py-2.5 rounded-full font-bold transition-all bg-gray-800 text-gray-400 hover:bg-gray-700 flex items-center gap-2"
+        >
+          <i class="fa-solid fa-table-columns"></i>
+          <span id="lblTabIcon">Icon Strip</span>
+        </button>
+      </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Sidebar / Config -->
-            <div class="space-y-6">
-                <!-- Config Panel -->
-                <div class="glass-panel p-6 shadow-xl">
-                    <h2 id="titleConfig" class="text-xl font-bold mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-sliders text-pink-500"></i>
-                        Configurações
-                    </h2>
-                    <div class="space-y-4">
-                        <div>
-                            <label id="lblSheetName" class="block text-sm font-medium text-gray-400 mb-1">Nome do Arquivo</label>
-                            <input type="text" id="sheetName" value="meu_personagem" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-pink-500 transition" placeholder="Ex: sprite_sheet">
-                        </div>
-                    </div>
-                </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="space-y-6">
+          <div class="glass-panel p-6 shadow-xl">
+            <h2
+              id="titleConfig"
+              class="text-xl font-bold mb-4 flex items-center gap-2"
+            >
+              <i class="fa-solid fa-sliders text-pink-500"></i>
+              Settings
+            </h2>
+            <div class="space-y-4">
+              <div>
+                <label
+                  id="lblSheetName"
+                  class="block text-sm font-medium text-gray-400 mb-1"
+                  >File Name</label
+                >
+                <input
+                  type="text"
+                  id="sheetName"
+                  value="my_character"
+                  class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-pink-500 transition"
+                  placeholder="Ex: my_character"
+                />
+              </div>
+              <div id="packing-alg-group">
+                <label
+                  id="lblPackingAlg"
+                  class="block text-sm font-medium text-gray-400 mb-1"
+                  >Packing Algorithm</label
+                >
+                <select
+                  id="packingAlg"
+                  class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-pink-500"
+                >
+                  <option value="maxrects">MaxRects (Efficient)</option>
+                  <option value="shelf">Shelf (Simple, preserves order)</option>
+                </select>
+              </div>
+            </div>
+          </div>
 
-                <!-- Export Panel -->
-                <div class="glass-panel p-6 shadow-xl text-center flex flex-col gap-3">
-                    <h2 id="titleExport" class="text-xl font-bold mb-2 text-left flex items-center gap-2">
-                        <i class="fa-solid fa-file-export text-purple-400"></i>
-                        Exportar Arquivos
-                    </h2>
-                    
-                    <!-- Painel Spritesheet -->
-                    <div id="export-sprite-panel" class="block">
-                        <button onclick="exportSprites()" class="btn-primary w-full py-3 rounded-lg font-bold text-white shadow-lg flex justify-center items-center gap-2">
-                            <i class="fa-solid fa-file-zipper text-lg"></i>
-                            <span id="btnExportZip">Gerar ZIP (PNG + XML)</span>
-                        </button>
-                        <p id="descSprite" class="text-xs text-gray-400 mt-2 text-left">Gera a folha de sprites compactada e o XML Sparrow V2.</p>
-                    </div>
+          <div
+            class="glass-panel p-6 shadow-xl text-center flex flex-col gap-3"
+          >
+            <h2
+              id="titleExport"
+              class="text-xl font-bold mb-2 text-left flex items-center gap-2"
+            >
+              <i class="fa-solid fa-file-export text-purple-400"></i>
+              Export Files
+            </h2>
 
-                    <!-- Painel Ícones -->
-                    <div id="export-icon-panel" class="hidden">
-                        <button onclick="exportIcon()" class="btn-icon w-full py-3 rounded-lg font-bold text-white shadow-lg flex justify-center items-center gap-2">
-                            <i class="fa-solid fa-file-image text-lg"></i>
-                            <span id="btnExportIcon">Gerar Tira de Ícones (PNG)</span>
-                        </button>
-                        <p id="descIcon" class="text-xs text-gray-400 mt-2 text-left">Alinha as imagens horizontalmente em uma tira de ícones (Icon Strip PNG).</p>
-                    </div>
-                </div>
+            <div id="export-sprite-panel" class="block">
+              <button
+                onclick="exportSprites()"
+                class="btn-primary w-full py-3 rounded-lg font-bold text-white shadow-lg flex justify-center items-center gap-2"
+              >
+                <i class="fa-solid fa-file-zipper text-lg"></i>
+                <span id="btnExportZip">Generate ZIP (PNG + XML)</span>
+              </button>
+              <p id="descSprite" class="text-xs text-gray-400 mt-2 text-left">
+                Generates the packed spritesheet and Sparrow V2 XML.
+              </p>
             </div>
 
-            <!-- Main Content / Editor -->
-            <div class="lg:col-span-2 space-y-6">
-                <!-- Dropzone -->
-                <div class="glass-panel p-1">
-                    <label id="dropzone" for="fileInput" class="block w-full border-2 border-dashed border-gray-600 hover:border-pink-500 hover:bg-gray-800/50 rounded-xl p-8 text-center cursor-pointer transition-all duration-200">
-                        <div class="flex flex-col items-center justify-center space-y-3">
-                            <div class="bg-gray-800/80 p-4 rounded-full text-pink-500 shadow-inner">
-                                <i class="fa-solid fa-cloud-arrow-up text-3xl"></i>
-                            </div>
-                            <div>
-                                <p id="dropTitle" class="text-lg font-semibold text-white">Clique ou Arraste suas imagens PNG</p>
-                                <p id="dropDesc" class="text-sm text-gray-400">Você pode selecionar múltiplos frames simultaneamente!</p>
-                            </div>
-                        </div>
-                        <input type="file" id="fileInput" multiple accept="image/png" class="hidden" onchange="handleFileInput(event)">
-                    </label>
-                </div>
-
-                <!-- Lista de Frames -->
-                <div class="glass-panel p-6 shadow-xl flex flex-col max-h-[600px]">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold flex items-center gap-2">
-                            <i class="fa-solid fa-layer-group text-pink-500"></i>
-                            <span id="titleFrames">Meus Frames</span> (<span id="frameCount">0</span>)
-                        </h2>
-                        <div class="flex gap-2">
-                            <button id="btnSort" onclick="sortFrames()" class="text-sm text-blue-400 hover:text-blue-300 transition px-2 flex items-center gap-1.5">
-                                <i class="fa-solid fa-arrow-down-a-z"></i> Organizar por Nome
-                            </button>
-                            <button id="btnClear" onclick="clearAll()" class="text-sm text-red-400 hover:text-red-300 transition px-2 border-l border-gray-600 flex items-center gap-1.5">
-                                <i class="fa-solid fa-trash-can"></i> Limpar Tudo
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div id="frameList" class="flex-1 overflow-y-auto space-y-3 pr-2 min-h-[200px]">
-                        <div class="text-center text-gray-500 my-10" id="emptyState">
-                            <i class="fa-regular fa-images text-5xl text-gray-600 mb-3 block"></i>
-                            <p id="emptyTitle" class="font-medium">Nenhuma imagem adicionada ainda.</p>
-                            <p id="emptyDesc" class="text-sm">Os frames aparecerão aqui em formato de lista.</p>
-                        </div>
-                    </div>
-                </div>
+            <div id="export-icon-panel" class="hidden">
+              <button
+                onclick="exportIcon()"
+                class="btn-icon w-full py-3 rounded-lg font-bold text-white shadow-lg flex justify-center items-center gap-2"
+              >
+                <i class="fa-solid fa-file-image text-lg"></i>
+                <span id="btnExportIcon">Generate Icon Strip (PNG)</span>
+              </button>
+              <p id="descIcon" class="text-xs text-gray-400 mt-2 text-left">
+                Aligns images horizontally into an Icon Strip PNG.
+              </p>
             </div>
+          </div>
         </div>
+
+        <div class="lg:col-span-2 space-y-6">
+          <div class="glass-panel p-1">
+            <label
+              id="dropzone"
+              for="fileInput"
+              class="block w-full border-2 border-dashed border-gray-600 hover:border-pink-500 hover:bg-gray-800/50 rounded-xl p-8 text-center cursor-pointer transition-all duration-200"
+            >
+              <div class="flex flex-col items-center justify-center space-y-3">
+                <div
+                  class="bg-gray-800/80 p-4 rounded-full text-pink-500 shadow-inner"
+                >
+                  <i class="fa-solid fa-cloud-arrow-up text-3xl"></i>
+                </div>
+                <div>
+                  <p id="dropTitle" class="text-lg font-semibold text-white">
+                    Click or Drag your PNG images
+                  </p>
+                  <p id="dropDesc" class="text-sm text-gray-400">
+                    You can select multiple frames at once!
+                  </p>
+                </div>
+              </div>
+              <input
+                type="file"
+                id="fileInput"
+                multiple
+                accept="image/png"
+                class="hidden"
+                onchange="handleFileInput(event)"
+              />
+            </label>
+          </div>
+
+          <div class="glass-panel p-6 shadow-xl flex flex-col max-h-[600px]">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-xl font-bold flex items-center gap-2">
+                <i class="fa-solid fa-layer-group text-pink-500"></i>
+                <span id="titleFrames">My Frames</span> (<span id="frameCount"
+                  >0</span
+                >)
+              </h2>
+              <div class="flex gap-2">
+                <button
+                  id="btnSort"
+                  onclick="sortFrames()"
+                  class="text-sm text-blue-400 hover:text-blue-300 transition px-2 flex items-center gap-1.5"
+                >
+                  <i class="fa-solid fa-arrow-down-a-z"></i> Sort by Name
+                </button>
+                <button
+                  id="btnClear"
+                  onclick="clearAll()"
+                  class="text-sm text-red-400 hover:text-red-300 transition px-2 border-l border-gray-600 flex items-center gap-1.5"
+                >
+                  <i class="fa-solid fa-trash-can"></i> Clear All
+                </button>
+              </div>
+            </div>
+
+            <div
+              id="frameList"
+              class="flex-1 overflow-y-auto space-y-3 pr-2 min-h-[200px]"
+            ></div>
+
+            <div id="emptyState" class="text-center text-gray-500 my-10">
+              <i
+                class="fa-regular fa-images text-5xl text-gray-600 mb-3 block"
+              ></i>
+              <p id="emptyTitle" class="font-medium">No images added yet.</p>
+              <p id="emptyDesc" class="text-sm">
+                Frames will appear here as a list.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Script Principal -->
     <script>
-        // --- SISTEMA DE ABAS (MODO DE OPERAÇÃO) ---
-        let currentMode = 'sprite';
+      let currentLang = "en";
+      const translations = {
+        br: {
+          descApp:
+            "Crie Spritesheets, XMLs e Tiras de Ícones otimizados para qualquer Engine de jogos.",
+          titleConfig: "Configurações",
+          lblSheetName: "Nome do Arquivo",
+          lblPackingAlg: "Algoritmo de Empacotamento",
+          titleExport: "Exportar Arquivos",
+          lblTabSprite: "Criar Spritesheet",
+          lblTabIcon: "Tira de Ícones (Strip)",
+          btnExportZip: "Gerar ZIP (PNG + XML)",
+          descSprite: "Gera a folha de sprites compactada e o XML Sparrow V2.",
+          btnExportIcon: "Gerar Tira de Ícones (PNG)",
+          descIcon:
+            "Alinha as imagens horizontalmente em uma tira de ícones (Icon Strip PNG).",
+          dropTitle: "Clique ou Arraste suas imagens PNG",
+          dropDesc: "Você pode selecionar múltiplos frames simultaneamente!",
+          titleFrames: "Meus Frames",
+          btnSort: "Organizar por Nome",
+          btnClear: "Limpar Tudo",
+          emptyTitle: "Nenhuma imagem adicionada ainda.",
+          emptyDesc: "Os frames aparecerão aqui em formato de lista.",
+          inputPlace: "Nome da Animação (ex: idle)",
+          msgOnlyPng: "Erro: Apenas imagens PNG são suportadas.",
+          msgLoading: "Carregando imagens, aguarde...",
+          msgAdded: "frame(s) adicionado(s) com sucesso!",
+          msgConfirmClear: "Tem certeza que deseja apagar todos os frames?",
+          msgCleared: "Todos os frames foram removidos.",
+          msgSorted: "Frames organizados em ordem alfabética!",
+          msgNoFrames: "Erro: Adicione frames antes de exportar!",
+          msgWait: "Processando arquivos, aguarde...",
+          msgSuccess: "Sucesso! Download iniciado.",
+          msgLoadError: "Erro ao carregar imagem: ",
+          msgLargeSprite:
+            "Aviso: Spritesheet muito grande (>8192px) pode causar problemas de performance.",
+          msgLibMissing:
+            "Biblioteca de empacotamento não carregada. Usando Shelf.",
+        },
+        en: {
+          descApp:
+            "Create Spritesheets, XMLs, and Icon Strips optimized for any game engine.",
+          titleConfig: "Settings",
+          lblSheetName: "File Name",
+          lblPackingAlg: "Packing Algorithm",
+          titleExport: "Export Files",
+          lblTabSprite: "Create Spritesheet",
+          lblTabIcon: "Icon Strip",
+          btnExportZip: "Generate ZIP (PNG + XML)",
+          descSprite: "Generates the packed spritesheet and Sparrow V2 XML.",
+          btnExportIcon: "Generate Icon Strip (PNG)",
+          descIcon: "Aligns images horizontally into an Icon Strip PNG.",
+          dropTitle: "Click or Drag your PNG images",
+          dropDesc: "You can select multiple frames at once!",
+          titleFrames: "My Frames",
+          btnSort: "Sort by Name",
+          btnClear: "Clear All",
+          emptyTitle: "No images added yet.",
+          emptyDesc: "Frames will appear here as a list.",
+          inputPlace: "Animation Name (e.g. idle)",
+          msgOnlyPng: "Error: Only PNG images are supported.",
+          msgLoading: "Loading images, please wait...",
+          msgAdded: "frame(s) successfully added!",
+          msgConfirmClear: "Are you sure you want to delete all frames?",
+          msgCleared: "All frames have been removed.",
+          msgSorted: "Frames sorted alphabetically!",
+          msgNoFrames: "Error: Add frames before exporting!",
+          msgWait: "Processing files, please wait...",
+          msgSuccess: "Success! Download started.",
+          msgLoadError: "Error loading image: ",
+          msgLargeSprite:
+            "Warning: Spritesheet too large (>8192px) may cause performance issues.",
+          msgLibMissing:
+            "Packing library not loaded. Falling back to Shelf algorithm.",
+        },
+        es: {
+          descApp:
+            "Crea Spritesheets, XMLs y Tiras de Iconos optimizados para cualquier motor de juegos.",
+          titleConfig: "Configuraciones",
+          lblSheetName: "Nombre del Archivo",
+          lblPackingAlg: "Algoritmo de Empaquetado",
+          titleExport: "Exportar Archivos",
+          lblTabSprite: "Crear Spritesheet",
+          lblTabIcon: "Tira de Iconos",
+          btnExportZip: "Generar ZIP (PNG + XML)",
+          descSprite:
+            "Genera la hoja de sprites compactada y el XML Sparrow V2.",
+          btnExportIcon: "Generar Tira de Iconos (PNG)",
+          descIcon:
+            "Alinea las imágenes horizontalmente en una tira de iconos (Icon Strip PNG).",
+          dropTitle: "Haz clic o arrastra tus imágenes PNG",
+          dropDesc: "¡Puedes seleccionar múltiples frames a la vez!",
+          titleFrames: "Mis Frames",
+          btnSort: "Ordenar por Nombre",
+          btnClear: "Limpiar Todo",
+          emptyTitle: "Aún no hay imágenes.",
+          emptyDesc: "Los frames aparecerán aquí en forma de lista.",
+          inputPlace: "Nombre de Animación (ej: idle)",
+          msgOnlyPng: "Error: Solo se admiten imágenes PNG.",
+          msgLoading: "Cargando imágenes, por favor espera...",
+          msgAdded: "frame(s) añadido(s) con éxito!",
+          msgConfirmClear:
+            "¿Estás seguro de que quieres borrar todos los frames?",
+          msgCleared: "Todos los frames han sido eliminados.",
+          msgSorted: "¡Frames ordenados alfabéticamente!",
+          msgNoFrames: "Error: ¡Añade frames antes de exportar!",
+          msgWait: "Procesando archivos, por favor espera...",
+          msgSuccess: "¡Éxito! Descarga iniciada.",
+          msgLoadError: "Error al cargar la imagen: ",
+          msgLargeSprite:
+            "Advertencia: Spritesheet demasiado grande (>8192px) puede causar problemas de rendimiento.",
+          msgLibMissing:
+            "La biblioteca de empaquetado no se cargó. Usando Shelf.",
+        },
+        id: {
+          descApp:
+            "Buat spritesheet, file XML, dan ikon strip yang dioptimalkan untuk mesin game apa pun.",
+          titleConfig: "Pengaturan",
+          lblSheetName: "Nama File",
+          lblPackingAlg: "Algoritma Penataan",
+          titleExport: "Ekspor File",
+          lblTabSprite: "Buat Spritesheet",
+          lblTabIcon: "Ikon Strip",
+          btnExportZip: "Hasilkan ZIP (PNG + XML)",
+          descSprite:
+            "Menghasilkan spritesheet yang dikompresi dan file XML Sparrow V2.",
+          btnExportIcon: "Hasilkan Ikon Strip (PNG)",
+          descIcon:
+            "Menyusun gambar secara horizontal menjadi file PNG berupa deretan ikon.",
+          dropTitle: "Klik atau seret gambar PNG Anda",
+          dropDesc: "Kamu bisa memilih beberapa bingkai sekaligus!",
+          titleFrames: "Bingkai Saya",
+          btnSort: "Sortir berdasarkan Nama",
+          btnClear: "Hapus Semua",
+          emptyTitle: "Tidak ada gambar ditambahkan.",
+          emptyDesc: "Bingkai-bingkai akan muncul di sini dalam bentuk daftar.",
+          inputPlace: "Nama Animasi (contoh: idle)",
+          msgOnlyPng: "Error: Hanya gambar PNG yang didukung.",
+          msgLoading: "Sedang memuat gambar, mohon tunggu...",
+          msgAdded: "bingkai telah berhasil ditambahkan!",
+          msgConfirmClear: "Apakah Anda yakin ingin menghapus semua bingkai?",
+          msgCleared: "Semua bingkai telah dihapus.",
+          msgSorted: "Bingkai yang diurutkan berdasarkan abjad!",
+          msgNoFrames: "Error: Tambahkan bingkai sebelum mengekspor!",
+          msgWait: "Sedang memproses file, mohon tunggu...",
+          msgSuccess: "Berhasil! Pengunduhan telah dimulai.",
+          msgLoadError: "Error memuat gambar: ",
+          msgLargeSprite:
+            "Peringatan: Spritesheet terlalu besar (>8192px) dapat menyebabkan masalah kinerja.",
+          msgLibMissing:
+            "Pustaka penataan tidak dimuat. Kembali menggunakan Shelf.",
+        },
+      };
 
-        function setMode(mode) {
-            currentMode = mode;
-            const tabSprite = document.getElementById('tab-sprite');
-            const tabIcon = document.getElementById('tab-icon');
-            const panelSprite = document.getElementById('export-sprite-panel');
-            const panelIcon = document.getElementById('export-icon-panel');
+      function t(key) {
+        return translations[currentLang][key] || key;
+      }
 
-            if (mode === 'sprite') {
-                tabSprite.className = 'px-6 py-2.5 rounded-full font-bold transition-all bg-pink-600 text-white shadow-lg shadow-pink-500/30 flex items-center gap-2';
-                tabIcon.className = 'px-6 py-2.5 rounded-full font-bold transition-all bg-gray-800 text-gray-400 hover:bg-gray-700 flex items-center gap-2';
-                panelSprite.style.display = 'block';
-                panelIcon.style.display = 'none';
+      function changeLanguage(lang) {
+        currentLang = lang;
+        document.documentElement.lang = lang;
+        document.getElementById("descApp").innerText = t("descApp");
+        document.getElementById("titleConfig").innerHTML = `
+          <i class="fa-solid fa-sliders text-pink-500"></i> ${t("titleConfig")}`;
+        document.getElementById("lblSheetName").innerText = t("lblSheetName");
+        document.getElementById("lblPackingAlg").innerText = t("lblPackingAlg");
+        document.getElementById("titleExport").innerHTML = `
+          <i class="fa-solid fa-file-export text-purple-400"></i> ${t("titleExport")}`;
+        document.getElementById("lblTabSprite").innerText = t("lblTabSprite");
+        document.getElementById("lblTabIcon").innerText = t("lblTabIcon");
+        document.getElementById("btnExportZip").innerText = t("btnExportZip");
+        document.getElementById("descSprite").innerText = t("descSprite");
+        document.getElementById("btnExportIcon").innerText = t("btnExportIcon");
+        document.getElementById("descIcon").innerText = t("descIcon");
+        document.getElementById("dropTitle").innerText = t("dropTitle");
+        document.getElementById("dropDesc").innerText = t("dropDesc");
+        document.getElementById("titleFrames").innerText = t("titleFrames");
+        document.getElementById("btnSort").innerHTML = `
+          <i class="fa-solid fa-arrow-down-a-z"></i> ${t("btnSort")}`;
+        document.getElementById("btnClear").innerHTML = `
+          <i class="fa-solid fa-trash-can"></i> ${t("btnClear")}`;
+        document.getElementById("emptyTitle").innerText = t("emptyTitle");
+        document.getElementById("emptyDesc").innerText = t("emptyDesc");
+        renderFrames();
+      }
+
+      function detectAndSetLanguage() {
+        const browserLang = navigator.language || navigator.userLanguage;
+        let detectedLang = "en";
+        if (browserLang) {
+          const langCode = browserLang.split("-")[0].toLowerCase();
+          if (langCode === "pt") {
+            const full = browserLang.toLowerCase();
+            detectedLang = full === "pt-br" || full === "pt_br" ? "br" : "en";
+          } else if (langCode === "es") detectedLang = "es";
+          else if (langCode === "id") detectedLang = "id";
+          else if (langCode === "en") detectedLang = "en";
+        }
+        document.getElementById("langSelect").value = detectedLang;
+        changeLanguage(detectedLang);
+      }
+
+      let currentMode = "sprite";
+      let frames = [];
+      let idCounter = 0;
+
+      function showToast(message) {
+        const container = document.getElementById("toast-container");
+        const toast = document.createElement("div");
+        toast.className = "toast";
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => {
+          if (toast.parentElement) toast.remove();
+        }, 3000);
+      }
+
+      function setMode(mode) {
+        currentMode = mode;
+        const tabSprite = document.getElementById("tab-sprite");
+        const tabIcon = document.getElementById("tab-icon");
+        const panelSprite = document.getElementById("export-sprite-panel");
+        const panelIcon = document.getElementById("export-icon-panel");
+        const packingGroup = document.getElementById("packing-alg-group");
+
+        if (mode === "sprite") {
+          tabSprite.className =
+            "px-6 py-2.5 rounded-full font-bold transition-all bg-pink-600 text-white shadow-lg shadow-pink-500/30 flex items-center gap-2";
+          tabIcon.className =
+            "px-6 py-2.5 rounded-full font-bold transition-all bg-gray-800 text-gray-400 hover:bg-gray-700 flex items-center gap-2";
+          panelSprite.style.display = "block";
+          panelIcon.style.display = "none";
+          packingGroup.style.display = "block";
+        } else {
+          tabIcon.className =
+            "px-6 py-2.5 rounded-full font-bold transition-all bg-pink-600 text-white shadow-lg shadow-pink-500/30 flex items-center gap-2";
+          tabSprite.className =
+            "px-6 py-2.5 rounded-full font-bold transition-all bg-gray-800 text-gray-400 hover:bg-gray-700 flex items-center gap-2";
+          panelSprite.style.display = "none";
+          panelIcon.style.display = "block";
+          packingGroup.style.display = "none";
+        }
+        renderFrames();
+      }
+
+      function readFileAsDataURL(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.onerror = (e) => reject(e);
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function loadImage(src) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = (e) => reject(e);
+          img.src = src;
+        });
+      }
+
+      async function processFiles(files) {
+        const validFiles = Array.from(files).filter((file) =>
+          file.type.match("image/png"),
+        );
+        if (validFiles.length === 0) {
+          showToast(t("msgOnlyPng"));
+          return;
+        }
+
+        let addedCount = 0;
+        let failedFiles = [];
+        showToast(t("msgLoading"));
+
+        for (const file of validFiles) {
+          try {
+            const dataUrl = await readFileAsDataURL(file);
+            const img = await loadImage(dataUrl);
+
+            let guessName = file.name.replace(/\.[^/.]+$/, "");
+            guessName = guessName.replace(/([_-]?)(\d+)$/, "");
+            guessName = guessName.replace(/[_-]+$/, "");
+            if (!guessName) guessName = "anim";
+
+            frames.push({
+              id: idCounter++,
+              filename: file.name,
+              animName: guessName,
+              imgElement: img,
+              width: img.width,
+              height: img.height,
+              dataUrl: dataUrl,
+            });
+            addedCount++;
+          } catch (error) {
+            console.error(`Error processing ${file.name}:`, error);
+            failedFiles.push(file.name);
+          }
+        }
+
+        if (failedFiles.length > 0) {
+          showToast(`${t("msgLoadError")}${failedFiles.join(", ")}`);
+        }
+        if (addedCount > 0) {
+          showToast(`${addedCount} ${t("msgAdded")}`);
+          renderFrames();
+        }
+      }
+
+      function renderFrames() {
+        const list = document.getElementById("frameList");
+        const emptyState = document.getElementById("emptyState");
+        const count = document.getElementById("frameCount");
+
+        count.textContent = frames.length;
+        list.innerHTML = "";
+
+        if (frames.length === 0) {
+          emptyState.style.display = "block";
+          return;
+        }
+        emptyState.style.display = "none";
+
+        frames.forEach((frame, index) => {
+          const item = document.createElement("div");
+          item.className =
+            "flex items-center gap-4 bg-gray-800/80 p-3 rounded-lg border border-gray-700 transition hover:border-gray-500";
+
+          const thumbWrapper = document.createElement("div");
+          thumbWrapper.className =
+            "w-16 h-16 bg-gray-900 rounded border border-gray-600 flex items-center justify-center overflow-hidden flex-shrink-0 relative";
+          thumbWrapper.style.backgroundImage =
+            "linear-gradient(45deg, #1f2937 25%, transparent 25%), linear-gradient(-45deg, #1f2937 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1f2937 75%), linear-gradient(-45deg, transparent 75%, #1f2937 75%)";
+          thumbWrapper.style.backgroundSize = "10px 10px";
+          thumbWrapper.style.backgroundPosition =
+            "0 0, 0 5px, 5px -5px, -5px 0px";
+
+          const thumb = document.createElement("img");
+          thumb.src = frame.dataUrl;
+          thumb.className = "max-w-full max-h-full object-contain";
+          thumb.alt = frame.filename;
+          thumbWrapper.appendChild(thumb);
+
+          const infoWrapper = document.createElement("div");
+          infoWrapper.className = "flex-1 flex flex-col justify-center min-w-0";
+
+          const filenameLabel = document.createElement("div");
+          filenameLabel.className = "text-xs text-gray-500 truncate mb-1";
+          filenameLabel.textContent =
+            frame.filename + ` (${frame.width}x${frame.height})`;
+          infoWrapper.appendChild(filenameLabel);
+
+          if (currentMode === "sprite") {
+            const nameInput = document.createElement("input");
+            nameInput.type = "text";
+            nameInput.value = frame.animName;
+            nameInput.placeholder = t("inputPlace");
+            nameInput.className =
+              "w-full bg-gray-900 border border-gray-600 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-pink-500 transition";
+            nameInput.oninput = (e) => {
+              frame.animName = e.target.value.trim() || "anim";
+            };
+            infoWrapper.appendChild(nameInput);
+          }
+
+          const controlsWrapper = document.createElement("div");
+          controlsWrapper.className = "flex items-center gap-1.5 flex-shrink-0";
+
+          const btnUp = document.createElement("button");
+          btnUp.className =
+            "w-8 h-8 btn-secondary rounded flex items-center justify-center text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed";
+          btnUp.disabled = index === 0;
+          btnUp.innerHTML = '<i class="fa-solid fa-chevron-up text-xs"></i>';
+          btnUp.onclick = () => moveFrame(index, -1);
+
+          const btnDown = document.createElement("button");
+          btnDown.className =
+            "w-8 h-8 btn-secondary rounded flex items-center justify-center text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed";
+          btnDown.disabled = index === frames.length - 1;
+          btnDown.innerHTML =
+            '<i class="fa-solid fa-chevron-down text-xs"></i>';
+          btnDown.onclick = () => moveFrame(index, 1);
+
+          const btnRemove = document.createElement("button");
+          btnRemove.className =
+            "w-8 h-8 btn-secondary rounded flex items-center justify-center hover:bg-red-500/20 text-red-400 hover:text-red-300";
+          btnRemove.innerHTML = '<i class="fa-solid fa-trash-can text-xs"></i>';
+          btnRemove.onclick = () => removeFrame(index);
+
+          controlsWrapper.appendChild(btnUp);
+          controlsWrapper.appendChild(btnDown);
+          controlsWrapper.appendChild(btnRemove);
+
+          item.appendChild(thumbWrapper);
+          item.appendChild(infoWrapper);
+          item.appendChild(controlsWrapper);
+
+          list.appendChild(item);
+        });
+      }
+
+      function moveFrame(index, dir) {
+        if (dir === -1 && index > 0) {
+          [frames[index], frames[index - 1]] = [
+            frames[index - 1],
+            frames[index],
+          ];
+          renderFrames();
+        } else if (dir === 1 && index < frames.length - 1) {
+          [frames[index], frames[index + 1]] = [
+            frames[index + 1],
+            frames[index],
+          ];
+          renderFrames();
+        }
+      }
+
+      function removeFrame(index) {
+        frames.splice(index, 1);
+        renderFrames();
+      }
+
+      function clearAll() {
+        if (confirm(t("msgConfirmClear"))) {
+          frames = [];
+          renderFrames();
+          showToast(t("msgCleared"));
+        }
+      }
+
+      function sortFrames() {
+        frames.sort((a, b) => a.filename.localeCompare(b.filename));
+        renderFrames();
+        showToast(t("msgSorted"));
+      }
+
+      function exportIcon() {
+        if (frames.length === 0) {
+          showToast(t("msgNoFrames"));
+          return;
+        }
+
+        const sheetName =
+          document.getElementById("sheetName").value.trim() || "icon_strip";
+
+        let totalWidth = 0;
+        let maxHeight = 0;
+        frames.forEach((f) => {
+          totalWidth += f.width;
+          if (f.height > maxHeight) maxHeight = f.height;
+        });
+
+        const canvas = document.createElement("canvas");
+        canvas.width = totalWidth;
+        canvas.height = maxHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        let currentX = 0;
+        frames.forEach((f) => {
+          ctx.drawImage(f.imgElement, currentX, 0);
+          currentX += f.width;
+        });
+
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          const downloadLink = document.createElement("a");
+          const url = URL.createObjectURL(blob);
+          downloadLink.href = url;
+          downloadLink.download = `${sheetName}.png`;
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+          setTimeout(() => URL.revokeObjectURL(url), 100);
+          showToast(t("msgSuccess"));
+        }, "image/png");
+      }
+
+      async function exportSprites() {
+        if (frames.length === 0) {
+          showToast(t("msgNoFrames"));
+          return;
+        }
+
+        if (typeof JSZip === "undefined") {
+          showToast("Error: JSZip not loaded.");
+          return;
+        }
+
+        showToast(t("msgWait"));
+
+        const sheetName =
+          document.getElementById("sheetName").value.trim() || "spritesheet";
+        const algorithm = document.getElementById("packingAlg").value;
+
+        const frameData = frames.map((f, idx) => ({
+          width: f.width,
+          height: f.height,
+          animName: f.animName || "anim",
+          img: f.imgElement,
+          index: idx,
+        }));
+
+        function packShelf(data) {
+          const MAX_WIDTH = 4096;
+          let currentX = 0,
+            currentY = 0,
+            rowHeight = 0,
+            maxUsedWidth = 0;
+          const placements = [];
+
+          for (let i = 0; i < data.length; i++) {
+            const item = data[i];
+            if (currentX + item.width > MAX_WIDTH && currentX > 0) {
+              currentX = 0;
+              currentY += rowHeight;
+              rowHeight = 0;
+            }
+            placements.push({
+              img: item.img,
+              x: currentX,
+              y: currentY,
+              w: item.width,
+              h: item.height,
+              animName: item.animName,
+              idx: item.index,
+            });
+            currentX += item.width;
+            if (currentX > maxUsedWidth) maxUsedWidth = currentX;
+            if (item.height > rowHeight) rowHeight = item.height;
+          }
+          return {
+            placements,
+            width: maxUsedWidth,
+            height: currentY + rowHeight,
+          };
+        }
+
+        function packMaxRects(data) {
+          if (typeof MaxRectsPacker === "undefined") {
+            showToast(t("msgLibMissing"));
+            return null;
+          }
+
+          const BIN_WIDTH = 4096;
+          const BIN_HEIGHT = 4096;
+
+          const packer = new MaxRectsPacker(BIN_WIDTH, BIN_HEIGHT, {
+            smart: true,
+            pot: false,
+            square: false,
+          });
+
+          for (const item of data) {
+            packer.add({
+              width: item.width,
+              height: item.height,
+              data: item.index,
+            });
+          }
+
+          let packedRects = packer.pack();
+
+          if (!packedRects || packedRects.length < data.length) {
+            packer.resize(4096, 8192);
+            packedRects = packer.pack();
+            if (!packedRects || packedRects.length < data.length) {
+              showToast(
+                "MaxRects couldn't fit all sprites in 4096x4096. Using Shelf.",
+              );
+              return null;
             } else {
-                tabIcon.className = 'px-6 py-2.5 rounded-full font-bold transition-all bg-pink-600 text-white shadow-lg shadow-pink-500/30 flex items-center gap-2';
-                tabSprite.className = 'px-6 py-2.5 rounded-full font-bold transition-all bg-gray-800 text-gray-400 hover:bg-gray-700 flex items-center gap-2';
-                panelSprite.style.display = 'none';
-                panelIcon.style.display = 'block';
+              showToast(
+                "Warning: Spritesheet height > 4096 (now 8192) may exceed some engine limits.",
+              );
             }
-            renderFrames();
-        }
+          }
 
-        // --- SISTEMA DE IDIOMAS ---
-        const translations = {
-            br: {
-                descApp: "Crie Spritesheets, XMLs e Tiras de Ícones otimizados para qualquer Engine de jogos.",
-                titleConfig: "Configurações",
-                lblSheetName: "Nome do Arquivo",
-                titleExport: "Exportar Arquivos",
-                lblTabSprite: "Criar Spritesheet",
-                lblTabIcon: "Tira de Ícones (Strip)",
-                btnExportZip: "Gerar ZIP (PNG + XML)",
-                descSprite: "Gera a folha de sprites compactada e o XML Sparrow V2.",
-                btnExportIcon: "Gerar Tira de Ícones (PNG)",
-                descIcon: "Alinha as imagens horizontalmente em uma tira de ícones (Icon Strip PNG).",
-                dropTitle: "Clique ou Arraste suas imagens PNG",
-                dropDesc: "Você pode selecionar múltiplos frames simultaneamente!",
-                titleFrames: "Meus Frames",
-                btnSort: "Organizar por Nome",
-                btnClear: "Limpar Tudo",
-                emptyTitle: "Nenhuma imagem adicionada ainda.",
-                emptyDesc: "Os frames aparecerão aqui em formato de lista.",
-                inputPlace: "Nome da Animação (ex: idle)",
-                msgOnlyPng: "Erro: Apenas imagens PNG são suportadas.",
-                msgLoading: "Carregando imagens, aguarde...",
-                msgAdded: "frame(s) adicionado(s) com sucesso!",
-                msgConfirmClear: "Tem certeza que deseja apagar todos os frames?",
-                msgCleared: "Todos os frames foram removidos.",
-                msgSorted: "Frames organizados em ordem alfabética!",
-                msgNoFrames: "Erro: Adicione frames antes de exportar!",
-                msgWait: "Processando arquivos, aguarde...",
-                msgSuccess: "Sucesso! Download iniciado."
-            },
-            en: {
-                descApp: "Create Spritesheets, XMLs, and Icon Strips optimized for any game engine.",
-                titleConfig: "Settings",
-                lblSheetName: "File Name",
-                titleExport: "Export Files",
-                lblTabSprite: "Create Spritesheet",
-                lblTabIcon: "Icon Strip",
-                btnExportZip: "Generate ZIP (PNG + XML)",
-                descSprite: "Generates the packed spritesheet and Sparrow V2 XML.",
-                btnExportIcon: "Generate Icon Strip (PNG)",
-                descIcon: "Aligns images horizontally into an Icon Strip PNG.",
-                dropTitle: "Click or Drag your PNG images",
-                dropDesc: "You can select multiple frames at once!",
-                titleFrames: "My Frames",
-                btnSort: "Sort by Name",
-                btnClear: "Clear All",
-                emptyTitle: "No images added yet.",
-                emptyDesc: "Frames will appear here as a list.",
-                inputPlace: "Animation Name (e.g. idle)",
-                msgOnlyPng: "Error: Only PNG images are supported.",
-                msgLoading: "Loading images, please wait...",
-                msgAdded: "frame(s) successfully added!",
-                msgConfirmClear: "Are you sure you want to delete all frames?",
-                msgCleared: "All frames have been removed.",
-                msgSorted: "Frames sorted alphabetically!",
-                msgNoFrames: "Error: Add frames before exporting!",
-                msgWait: "Processing files, please wait...",
-                msgSuccess: "Success! Download started."
-            },
-            es: {
-                descApp: "Crea Spritesheets, XMLs y Tiras de Iconos optimizados para cualquier motor de juegos.",
-                titleConfig: "Configuraciones",
-                lblSheetName: "Nombre del Archivo",
-                titleExport: "Exportar Archivos",
-                lblTabSprite: "Crear Spritesheet",
-                lblTabIcon: "Tira de Iconos",
-                btnExportZip: "Generar ZIP (PNG + XML)",
-                descSprite: "Genera la hoja de sprites compactada y el XML Sparrow V2.",
-                btnExportIcon: "Generar Tira de Iconos (PNG)",
-                descIcon: "Alinea las imágenes horizontalmente en una tira de iconos (Icon Strip PNG).",
-                dropTitle: "Haz clic o arrastra tus imágenes PNG",
-                dropDesc: "¡Puedes seleccionar múltiples frames a la vez!",
-                titleFrames: "Mis Frames",
-                btnSort: "Ordenar por Nombre",
-                btnClear: "Limpiar Todo",
-                emptyTitle: "Aún no hay imágenes.",
-                emptyDesc: "Los frames aparecerán aquí en forma de lista.",
-                inputPlace: "Nombre de Animación (ej: idle)",
-                msgOnlyPng: "Error: Solo se admiten imágenes PNG.",
-                msgLoading: "Cargando imágenes, por favor espera...",
-                msgAdded: "frame(s) añadido(s) con éxito!",
-                msgConfirmClear: "¿Estás seguro de que quieres borrar todos los frames?",
-                msgCleared: "Todos los frames han sido eliminados.",
-                msgSorted: "¡Frames ordenados alfabéticamente!",
-                msgNoFrames: "Error: ¡Añade frames antes de exportar!",
-                msgWait: "Procesando archivos, por favor espera...",
-                msgSuccess: "¡Éxito! Descarga iniciada."
-            }
-        };
-
-        let currentLang = 'br';
-
-        function t(key) {
-            return translations[currentLang][key];
-        }
-
-        function changeLanguage(lang) {
-            currentLang = lang;
-            document.documentElement.lang = lang;
-            
-            // Atualizar textos mantendo os ícones
-            document.getElementById('descApp').innerText = t('descApp');
-            document.getElementById('titleConfig').innerHTML = `<i class="fa-solid fa-sliders text-pink-500"></i> ${t('titleConfig')}`;
-            document.getElementById('lblSheetName').innerText = t('lblSheetName');
-            document.getElementById('titleExport').innerHTML = `<i class="fa-solid fa-file-export text-purple-400"></i> ${t('titleExport')}`;
-            document.getElementById('lblTabSprite').innerText = t('lblTabSprite');
-            document.getElementById('lblTabIcon').innerText = t('lblTabIcon');
-            document.getElementById('btnExportZip').innerText = t('btnExportZip');
-            document.getElementById('descSprite').innerText = t('descSprite');
-            document.getElementById('btnExportIcon').innerText = t('btnExportIcon');
-            document.getElementById('descIcon').innerText = t('descIcon');
-            document.getElementById('dropTitle').innerText = t('dropTitle');
-            document.getElementById('dropDesc').innerText = t('dropDesc');
-            document.getElementById('titleFrames').innerText = t('titleFrames');
-            document.getElementById('btnSort').innerHTML = `<i class="fa-solid fa-arrow-down-a-z"></i> ${t('btnSort')}`;
-            document.getElementById('btnClear').innerHTML = `<i class="fa-solid fa-trash-can"></i> ${t('btnClear')}`;
-            document.getElementById('emptyTitle').innerText = t('emptyTitle');
-            document.getElementById('emptyDesc').innerText = t('emptyDesc');
-
-            renderFrames(); 
-        }
-
-        // --- SISTEMA CORE ---
-        let frames = [];
-        let idCounter = 0;
-
-        function showToast(message) {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.textContent = message;
-            container.appendChild(toast);
-            setTimeout(() => {
-                if (toast.parentElement) toast.remove();
-            }, 3000);
-        }
-
-        const dropzone = document.getElementById('dropzone');
-        
-        dropzone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropzone.classList.add('dropzone-active');
-        });
-
-        dropzone.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            dropzone.classList.remove('dropzone-active');
-        });
-
-        dropzone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropzone.classList.remove('dropzone-active');
-            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                processFiles(e.dataTransfer.files);
-            }
-        });
-
-        function handleFileInput(event) {
-            if (event.target.files && event.target.files.length > 0) {
-                processFiles(event.target.files);
-            }
-            event.target.value = '';
-        }
-
-        function readFileAsDataURL(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target.result);
-                reader.onerror = (e) => reject(e);
-                reader.readAsDataURL(file);
+          const placements = [];
+          let maxX = 0,
+            maxY = 0;
+          for (const rect of packedRects) {
+            const idx = rect.data;
+            const item = data[idx];
+            placements.push({
+              img: item.img,
+              x: rect.x,
+              y: rect.y,
+              w: rect.width,
+              h: rect.height,
+              animName: item.animName,
+              idx: item.index,
             });
+            maxX = Math.max(maxX, rect.x + rect.width);
+            maxY = Math.max(maxY, rect.y + rect.height);
+          }
+
+          placements.sort((a, b) => a.idx - b.idx);
+          return { placements, width: maxX, height: maxY };
         }
 
-        function loadImage(src) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.onerror = (e) => reject(e);
-                img.src = src;
-            });
+        let packResult;
+        if (algorithm === "maxrects") {
+          packResult = packMaxRects(frameData);
+          if (!packResult) packResult = packShelf(frameData);
+        } else {
+          packResult = packShelf(frameData);
         }
 
-        async function processFiles(files) {
-            const validFiles = Array.from(files).filter(file => file.type.match('image/png'));
-            
-            if (validFiles.length === 0) {
-                showToast(t('msgOnlyPng'));
-                return;
-            }
+        const {
+          placements,
+          width: canvasWidth,
+          height: canvasHeight,
+        } = packResult;
 
-            let addedCount = 0;
-            showToast(t('msgLoading'));
-
-            for (const file of validFiles) {
-                try {
-                    const dataUrl = await readFileAsDataURL(file);
-                    const img = await loadImage(dataUrl);
-                    
-                    let guessName = file.name
-                        .replace(/\.[^/.]+$/, "")
-                        .replace(/[0-9]+$/, "")
-                        .replace(/[_-]+$/, "");
-                    
-                    if (!guessName) guessName = "anim"; 
-                    
-                    frames.push({
-                        id: idCounter++,
-                        filename: file.name,
-                        animName: guessName,
-                        imgElement: img,
-                        width: img.width,
-                        height: img.height,
-                        dataUrl: dataUrl
-                    });
-                    
-                    addedCount++;
-                } catch (error) {
-                    console.error(`Error processing ${file.name}:`, error);
-                }
-            }
-
-            if (addedCount > 0) {
-                showToast(`${addedCount} ${t('msgAdded')}`);
-                renderFrames();
-            }
+        if (canvasHeight > 4096) {
+          showToast(
+            `Warning: Spritesheet is ${canvasHeight}px tall may exceed engine limits.`,
+          );
         }
 
-        function renderFrames() {
-            const list = document.getElementById('frameList');
-            const emptyState = document.getElementById('emptyState');
-            const count = document.getElementById('frameCount');
-            
-            count.textContent = frames.length;
+        const canvas = document.createElement("canvas");
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            if (frames.length === 0) {
-                list.innerHTML = '';
-                list.appendChild(emptyState);
-                emptyState.style.display = 'block';
-                return;
-            }
+        let xmlContent = `<?xml version="1.0" encoding="utf-8"?>\n<TextureAtlas imagePath="${sheetName}.png">\n`;
+        const animCounters = {};
 
-            emptyState.style.display = 'none';
-            list.innerHTML = '';
+        for (const p of placements) {
+          ctx.drawImage(p.img, p.x, p.y);
+          const prefix = p.animName;
+          if (!animCounters[prefix]) animCounters[prefix] = 0;
+          const frameNum = String(animCounters[prefix]).padStart(4, "0");
+          const subName = `${prefix}${frameNum}`;
+          animCounters[prefix]++;
 
-            frames.forEach((frame, index) => {
-                const item = document.createElement('div');
-                item.className = 'flex items-center gap-4 bg-gray-800/80 p-3 rounded-lg border border-gray-700 transition hover:border-gray-500';
-                
-                const thumbWrapper = document.createElement('div');
-                thumbWrapper.className = 'w-16 h-16 bg-gray-900 rounded border border-gray-600 flex items-center justify-center overflow-hidden flex-shrink-0 relative';
-                thumbWrapper.style.backgroundImage = 'linear-gradient(45deg, #1f2937 25%, transparent 25%), linear-gradient(-45deg, #1f2937 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1f2937 75%), linear-gradient(-45deg, transparent 75%, #1f2937 75%)';
-                thumbWrapper.style.backgroundSize = '10px 10px';
-                thumbWrapper.style.backgroundPosition = '0 0, 0 5px, 5px -5px, -5px 0px';
-                
-                const thumb = document.createElement('img');
-                thumb.src = frame.dataUrl;
-                thumb.className = 'max-w-full max-h-full object-contain';
-                thumbWrapper.appendChild(thumb);
-                
-                const infoWrapper = document.createElement('div');
-                infoWrapper.className = 'flex-1 flex flex-col justify-center min-w-0';
-                
-                const filenameLabel = document.createElement('div');
-                filenameLabel.className = 'text-xs text-gray-500 truncate mb-1';
-                filenameLabel.textContent = frame.filename + ` (${frame.width}x${frame.height})`;
-                infoWrapper.appendChild(filenameLabel);
-
-                if (currentMode === 'sprite') {
-                    const nameInput = document.createElement('input');
-                    nameInput.type = 'text';
-                    nameInput.value = frame.animName;
-                    nameInput.placeholder = t('inputPlace');
-                    nameInput.className = 'w-full bg-gray-900 border border-gray-600 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-pink-500 transition';
-                    
-                    nameInput.oninput = (e) => {
-                        frame.animName = e.target.value.trim();
-                    };
-                    infoWrapper.appendChild(nameInput);
-                }
-
-                const controlsWrapper = document.createElement('div');
-                controlsWrapper.className = 'flex items-center gap-1.5 flex-shrink-0';
-                
-                const btnUp = document.createElement('button');
-                btnUp.className = 'w-8 h-8 btn-secondary rounded flex items-center justify-center text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed';
-                btnUp.disabled = index === 0;
-                btnUp.innerHTML = '<i class="fa-solid fa-chevron-up text-xs"></i>';
-                btnUp.onclick = () => moveFrame(index, -1);
-                
-                const btnDown = document.createElement('button');
-                btnDown.className = 'w-8 h-8 btn-secondary rounded flex items-center justify-center text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed';
-                btnDown.disabled = index === frames.length - 1;
-                btnDown.innerHTML = '<i class="fa-solid fa-chevron-down text-xs"></i>';
-                btnDown.onclick = () => moveFrame(index, 1);
-                
-                const btnRemove = document.createElement('button');
-                btnRemove.className = 'w-8 h-8 btn-secondary rounded flex items-center justify-center hover:bg-red-500/20 text-red-400 hover:text-red-300';
-                btnRemove.innerHTML = '<i class="fa-solid fa-trash-can text-xs"></i>';
-                btnRemove.onclick = () => removeFrame(index);
-
-                controlsWrapper.appendChild(btnUp);
-                controlsWrapper.appendChild(btnDown);
-                controlsWrapper.appendChild(btnRemove);
-
-                item.appendChild(thumbWrapper);
-                item.appendChild(infoWrapper);
-                item.appendChild(controlsWrapper);
-                
-                list.appendChild(item);
-            });
+          xmlContent += `\t<SubTexture name="${subName}" x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" frameWidth="${p.w}" frameHeight="${p.h}" />\n`;
         }
+        xmlContent += `</TextureAtlas>`;
 
-        function moveFrame(index, dir) {
-            if (dir === -1 && index > 0) {
-                const temp = frames[index];
-                frames[index] = frames[index - 1];
-                frames[index - 1] = temp;
-                renderFrames();
-            } else if (dir === 1 && index < frames.length - 1) {
-                const temp = frames[index];
-                frames[index] = frames[index + 1];
-                frames[index + 1] = temp;
-                renderFrames();
-            }
+        const zip = new JSZip();
+        zip.file(`${sheetName}.xml`, xmlContent);
+
+        canvas.toBlob(async (blob) => {
+          if (!blob) {
+            showToast("Error generating spritesheet image.");
+            return;
+          }
+          zip.file(`${sheetName}.png`, blob);
+
+          try {
+            const zipBlob = await zip.generateAsync({ type: "blob" });
+            const downloadLink = document.createElement("a");
+            const url = URL.createObjectURL(zipBlob);
+            downloadLink.href = url;
+            downloadLink.download = `${sheetName}.zip`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+            showToast(t("msgSuccess"));
+          } catch (error) {
+            console.error(error);
+            showToast("Error generating ZIP file.");
+          }
+        }, "image/png");
+      }
+
+      const dropzone = document.getElementById("dropzone");
+      dropzone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropzone.classList.add("dropzone-active");
+      });
+      dropzone.addEventListener("dragleave", (e) => {
+        e.preventDefault();
+        dropzone.classList.remove("dropzone-active");
+      });
+      dropzone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropzone.classList.remove("dropzone-active");
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          processFiles(e.dataTransfer.files);
         }
+      });
 
-        function removeFrame(index) {
-            frames.splice(index, 1);
-            renderFrames();
+      function handleFileInput(event) {
+        if (event.target.files && event.target.files.length > 0) {
+          processFiles(event.target.files);
         }
+        event.target.value = "";
+      }
 
-        function clearAll() {
-            if(confirm(t('msgConfirmClear'))) {
-                frames = [];
-                renderFrames();
-                showToast(t('msgCleared'));
-            }
-        }
-
-        function sortFrames() {
-            frames.sort((a, b) => a.filename.localeCompare(b.filename));
-            renderFrames();
-            showToast(t('msgSorted'));
-        }
-
-        // --- EXPORTAR ÍCONE DE TIRA (STRIP) ---
-        function exportIcon() {
-            if (frames.length === 0) {
-                showToast(t('msgNoFrames'));
-                return;
-            }
-
-            const sheetName = document.getElementById("sheetName").value.trim() || "icon_strip";
-            
-            let totalWidth = 0;
-            let maxHeight = 0;
-            frames.forEach(f => {
-                totalWidth += f.width;
-                if(f.height > maxHeight) maxHeight = f.height;
-            });
-
-            const canvas = document.createElement('canvas');
-            canvas.width = totalWidth;
-            canvas.height = maxHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            let currentX = 0;
-            frames.forEach(f => {
-                ctx.drawImage(f.imgElement, currentX, 0);
-                currentX += f.width;
-            });
-
-            canvas.toBlob((blob) => {
-                if (!blob) return;
-                const downloadLink = document.createElement('a');
-                downloadLink.href = URL.createObjectURL(blob);
-                downloadLink.download = `${sheetName}.png`;
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-                showToast(t('msgSuccess'));
-            }, "image/png");
-        }
-
-        // --- EXPORTAR ZIP (PNG + XML) ---
-        async function exportSprites() {
-            if (frames.length === 0) {
-                showToast(t('msgNoFrames'));
-                return;
-            }
-
-            if (typeof JSZip === 'undefined') {
-                showToast("Erro: Bibliotecas JS não carregadas.");
-                return;
-            }
-
-            showToast(t('msgWait'));
-
-            const sheetName = document.getElementById("sheetName").value.trim() || "spritesheet";
-            
-            const MAX_CANVAS_WIDTH = 4096; 
-            let currentX = 0;
-            let currentY = 0;
-            let currentRowHeight = 0;
-            let maxUsedWidth = 0;
-
-            const packedData = [];
-            const animationCounters = {};
-
-            for (let i = 0; i < frames.length; i++) {
-                const frame = frames[i];
-                
-                if (currentX + frame.width > MAX_CANVAS_WIDTH && currentX > 0) {
-                    currentX = 0;
-                    currentY += currentRowHeight;
-                    currentRowHeight = 0;
-                }
-
-                packedData.push({
-                    img: frame.imgElement,
-                    x: currentX,
-                    y: currentY,
-                    w: frame.width,
-                    h: frame.height,
-                    animPrefix: frame.animName || "anim"
-                });
-
-                currentX += frame.width;
-                if (currentX > maxUsedWidth) maxUsedWidth = currentX;
-                if (frame.height > currentRowHeight) currentRowHeight = frame.height;
-            }
-
-            const finalCanvasWidth = maxUsedWidth;
-            const finalCanvasHeight = currentY + currentRowHeight;
-
-            const canvas = document.createElement('canvas');
-            canvas.width = finalCanvasWidth;
-            canvas.height = finalCanvasHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            let xmlContent = `<?xml version="1.0" encoding="utf-8"?>\n<TextureAtlas imagePath="${sheetName}.png">\n`;
-
-            for (let i = 0; i < packedData.length; i++) {
-                const item = packedData[i];
-                ctx.drawImage(item.img, item.x, item.y);
-                
-                const prefix = item.animPrefix;
-                if (animationCounters[prefix] === undefined) {
-                    animationCounters[prefix] = 0;
-                }
-                const frameNum = animationCounters[prefix].toString().padStart(4, '0');
-                const subTextureName = `${prefix}${frameNum}`;
-                animationCounters[prefix]++;
-
-                xmlContent += `\t<SubTexture name="${subTextureName}" x="${item.x}" y="${item.y}" width="${item.w}" height="${item.h}" frameX="0" frameY="0" frameWidth="${item.w}" frameHeight="${item.h}" />\n`;
-            }
-
-            xmlContent += `</TextureAtlas>`;
-
-            const zip = new JSZip();
-            zip.file(`${sheetName}.xml`, xmlContent);
-
-            canvas.toBlob(async (blob) => {
-                if (!blob) {
-                    showToast("Erro ao gerar a imagem.");
-                    return;
-                }
-                zip.file(`${sheetName}.png`, blob);
-                
-                try {
-                    const zipBlob = await zip.generateAsync({type: "blob"});
-                    const downloadLink = document.createElement('a');
-                    downloadLink.href = URL.createObjectURL(zipBlob);
-                    downloadLink.download = `${sheetName}.zip`;
-                    document.body.appendChild(downloadLink);
-                    downloadLink.click();
-                    document.body.removeChild(downloadLink);
-                    
-                    showToast(t('msgSuccess'));
-                } catch (error) {
-                    console.error(error);
-                    showToast("Erro ao gerar o ZIP.");
-                }
-            }, "image/png");
-        }
+      document.addEventListener("DOMContentLoaded", () => {
+        detectAndSetLanguage();
+        setMode("sprite");
+      });
     </script>
-</body>
+  </body>
 </html>
